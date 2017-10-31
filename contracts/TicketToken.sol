@@ -35,16 +35,17 @@ contract TicketToken is ERC20 {
     }
     
     function buyTickets() payable {
-        require(msg.value > 0);
+        require(msg.value > 0);        
         if(msg.value < price) {
-            throw;
+            throw; // >>> why not include this in the require?
         } else {
             // msg.sender.send(msg.value - _price)
             transferFromOwnerToSender(1, msg.sender);
         }
         owner.transfer(msg.value);
     }
-    
+
+    // >>> this function currently callable by anyone, people can just get free tickets from the owner
     function transferFromOwnerToSender(uint _amountOfTickets, address _sender) {
         tickets[owner] = tickets[owner].sub(_amountOfTickets);
         tickets[_sender] = tickets[_sender].add(_amountOfTickets);
@@ -66,10 +67,10 @@ contract TicketToken is ERC20 {
         );
         tickets[msg.sender] = tickets[msg.sender].sub(_numberOfTickets);
         uint256 myValue = msg.value;
-        myValue.add(price * _numberOfTickets);
+        myValue.add(price * _numberOfTickets); // >>> this current doesn't send value. Use msg.sender.transfer 
         tickets[_to] = tickets[_to].add(_numberOfTickets);
         uint256 toBalance = _to.balance;
-        toBalance -= (price * _numberOfTickets);
+        toBalance -= (price * _numberOfTickets); // >>> this also doesn't send any value
         return true;
     }
 
@@ -80,11 +81,11 @@ contract TicketToken is ERC20 {
             msg.value > (_numberOfTickets * price)
         );
         uint256 myValue = msg.value;
-        myValue = myValue.sub(price * _numberOfTickets);
+        myValue = myValue.sub(price * _numberOfTickets); // >>> same problem, right?
         tickets[msg.sender] = tickets[msg.sender].add(_numberOfTickets);
         tickets[_from] = tickets[_from].sub(_numberOfTickets);
         uint256 fromBalance = _from.balance;
-        fromBalance += (price * _numberOfTickets);
+        fromBalance += (price * _numberOfTickets); // >>> same problem
         return true;
     }
 
@@ -96,7 +97,7 @@ contract TicketToken is ERC20 {
         );
         tickets[msg.sender] = tickets[msg.sender].sub(_value);
         tickets[_to] = tickets[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        Transfer(msg.sender, _to, _value); // >>> is this an event? doesn't it have to be defined first?
         return true;
     }
 
@@ -110,13 +111,13 @@ contract TicketToken is ERC20 {
         tickets[_to] = tickets[msg.sender].add(_value);
         // lower the total amount allowed to spend
         approved[_from][msg.sender] = approved[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        Transfer(_from, _to, _value); // >>> same here
         return true;
     }
 
     function approve(address _spender, uint _value) returns (bool success) {
         approved[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value); // >>> undefined event
         return true;
     }
 
